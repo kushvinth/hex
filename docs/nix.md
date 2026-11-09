@@ -1,20 +1,21 @@
 # Nix
 
-The flake packages Hex for Linux only, `x86_64-linux` and `aarch64-linux`;
-there is no macOS package. Both targets build from source; `aarch64-linux`
-evaluates but has not been built or run on real ARM64 hardware yet. It
-supports the Linux X11 beta and native Wayland on compatible wlroots
-compositors. Wayland requires layer-shell for the recording overlay, the
-clipboard protocol used by `wl-copy`, and the virtual-keyboard protocol
-used by `wtype`. Global shortcuts come from the desktop's GlobalShortcuts
-portal, or from your own compositor keybindings running the `hex` commands.
-This is not a claim of support for every Wayland desktop; GNOME and KDE are
-not covered by this contract.
+The flake packages Hex for Linux (`x86_64-linux` and `aarch64-linux`) and macOS Apple Silicon (`aarch64-darwin`).
+
+On Linux, both targets build from source; `aarch64-linux` evaluates but has
+not been built or run on real ARM64 hardware yet. It supports the Linux X11
+beta and native Wayland on compatible wlroots compositors. Wayland requires
+layer-shell for the recording overlay, the clipboard protocol used by
+`wl-copy`, and the virtual-keyboard protocol used by `wtype`. Global
+shortcuts come from the desktop's GlobalShortcuts portal, or from your own
+compositor keybindings running the `hex` commands. This is not a claim of
+support for every Wayland desktop; GNOME and KDE are not covered by this
+contract.
+
+On macOS (`aarch64-darwin`), the flake packages the release `Hex.app` bundle
+and links the `hex` CLI command.
 
 ## Run Or Install
-
-On macOS, install the [DMG or Homebrew cask](../README.md#downloads) instead;
-the flake has no `aarch64-darwin` package.
 
 From a checkout, with Nix flakes enabled:
 
@@ -24,9 +25,14 @@ nix run . -- model install
 nix run . -- app
 ```
 
+Or install with:
+
+```sh
+nix profile add github:anomalyco/hex
+```
+
 Or add `hex.url = "github:anomalyco/hex"` to your configuration's flake inputs
-and install `hex.packages.${system}.default` (`x86_64-linux` or
-`aarch64-linux`). The package supplies the
+and install `hex.packages.${system}.default`. The package supplies the
 `hex` command and desktop launcher, native libraries (including PipeWire and
 libva for Annotate), and the `curl`, `wl-copy`, `wtype`, and `ffmpeg`/`ffprobe`
 runtime dependencies. Annotate's hardware encoder uses whatever VA-API driver

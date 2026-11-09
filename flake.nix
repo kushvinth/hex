@@ -15,6 +15,7 @@
       systems = [
         "x86_64-linux"
         "aarch64-linux"
+        "aarch64-darwin"
       ];
       forSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
       package = pkgs: self.packages.${pkgs.stdenv.hostPlatform.system}.hex;
@@ -23,7 +24,11 @@
       packages = forSystems (
         pkgs:
         let
-          hex = pkgs.callPackage ./nix/package.nix { };
+          hex =
+            if pkgs.stdenv.hostPlatform.isDarwin then
+              pkgs.callPackage ./nix/package-darwin.nix { }
+            else
+              pkgs.callPackage ./nix/package.nix { };
         in
         {
           inherit hex;
@@ -32,7 +37,11 @@
       );
 
       overlays.default = final: _prev: {
-        hex = final.callPackage ./nix/package.nix { };
+        hex =
+          if final.stdenv.hostPlatform.isDarwin then
+            final.callPackage ./nix/package-darwin.nix { }
+          else
+            final.callPackage ./nix/package.nix { };
       };
 
       nixosModules.hex =
@@ -52,9 +61,20 @@
       homeManagerModules.default = self.homeManagerModules.hex;
 
       devShells = forSystems (pkgs: {
-        default = (package pkgs).devShell;
+        default = (package pkgs).devShell or (pkgs.mkShell { });
       });
-      checks = forSystems (pkgs: import ./nix/checks.nix { inherit self pkgs; });
+      checks = forSystems (
+        pkgs:
+        if pkgs.stdenv.hostPlatform.isLinux then
+          import ./nix/checks.nix { inherit self pkgs; }
+        else
+          {
+            package = pkgs.runCommand "hex-darwin-package-check" { } ''
+              ${pkgs.lib.getExe (package pkgs)} --version
+              touch "$out"
+            '';
+          }
+      );
       formatter = forSystems (pkgs: pkgs.nixfmt);
     };
 }
